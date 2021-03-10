@@ -15,7 +15,10 @@ const successText = 'You have already been invited to join this team. We have se
 
 const resendInvite = async (email) => {
   try {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--disable-gpu', '--no-sandbox'],
+    });
     const page = await browser.newPage();
 
     await page.goto(`${SLACK_URL}/forgot/reset`);
@@ -36,7 +39,6 @@ const resendInvite = async (email) => {
 };
 
 app.use((req, res, next) => {
-  console.log(req.token, TOKEN)
   if (req.token !== TOKEN) {
     res.status(401).send('Unauthorized');
   } else {
