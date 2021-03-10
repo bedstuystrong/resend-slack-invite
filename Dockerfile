@@ -1,5 +1,6 @@
 FROM zenika/alpine-chrome:with-puppeteer
 
+USER node
 WORKDIR /app
 
 COPY package*.json yarn.lock ./
