@@ -1,6 +1,6 @@
 # resend-slack-invite
  
-Small server that uses Puppeteer to request a new Slack invite for a previously invited user.
+Small webhook that uses Puppeteer to request a new Slack invite for a previously invited user.
 
 ## Why?
 
@@ -67,3 +67,7 @@ Set the `TOKEN` environment variable to a randomly generated secret. Use this as
 cp sample.env .env
 docker container run -it --rm -v $(pwd):/usr/src/app -p 3000:3000 --cap-add=SYS_ADMIN zenika/alpine-chrome:with-puppeteer node index.js
 ```
+
+## Deployment
+
+cloud run: 512mb
