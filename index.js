@@ -39,7 +39,7 @@ const resendInvite = async (email) => {
 };
 
 app.use((req, res, next) => {
-  if (req.token !== TOKEN) {
+  if (!!TOKEN && req.token !== TOKEN) {
     res.status(401).send('Unauthorized');
   } else {
     next();
