@@ -56,9 +56,9 @@ app.post('/resend', async (req, res) => {
 
   const ok = await resendInvite(email);
   if (ok) {
-    res.send(200);
+    res.sendStatus(200);
   } else {
-    res.status(400).send('Invite re-send failed');
+    res.status(404).send('Invite re-send failed, user may already exist');
   }
 });
 
