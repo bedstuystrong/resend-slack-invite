@@ -2,6 +2,8 @@
  
 Small webhook that uses Puppeteer to request a new Slack invite for a previously invited user.
 
+Disclaimer: this could stop working at literally any time!
+
 ## Why?
 
 Slack doesn't provide a simple way to programmatically invite users to a workspace [unless you're on an Enterprise plan](https://api.slack.com/methods/admin.users.invite) 🙃. There used to be an undocumented API, but it [no longer works except with legacy tokens](https://stackoverflow.com/questions/30955818/slack-api-team-invitation) (unavailable to all new apps).
