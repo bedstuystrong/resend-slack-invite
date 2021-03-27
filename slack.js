@@ -36,7 +36,7 @@ const createScimUser = async ({email, name, username = email} = {}) => {
   });
   const json = await response.json();
   if (response.ok) {
-    return json.user;
+    return json;
   } else {
     const error = new Error(json.Errors.description);
     error.json = json.Errors;
