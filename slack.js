@@ -45,7 +45,7 @@ const createScimUser = async ({email, name, username = email} = {}) => {
 };
 
 const extractUsernameError = (error) => {
-  if (!error.message.includes('username')) return false;
+  if (!error.message.includes('username_')) return false;
 
   const matches = error.message.match(/(\S+)\s\(username=(.*)\)/i);
   error.code = matches[1];
