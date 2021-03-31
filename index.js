@@ -46,6 +46,7 @@ app.post('/user', async (req, res) => {
 
     res.status(200).json(response);
   } catch (e) {
+    console.error(e);
     res.status(500).send(e.message);
   }
 });
