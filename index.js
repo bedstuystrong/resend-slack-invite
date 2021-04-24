@@ -1,64 +1,53 @@
 require('dotenv').config();
-const puppeteer = require('puppeteer');
+const isSameDay = require('date-fns/isSameDay');
 const express = require('express');
 const bodyParser = require('body-parser');
 const bearerToken = require('express-bearer-token');
+
+const { createUser } = require('./slack');
+const { resendInvite } = require('./invite');
 
 const app = express();
 app.use(bodyParser.json());
 app.use(bearerToken());
 
 const PORT = process.env.PORT || 3000;
-const SLACK_URL = process.env.SLACK_URL;
-const TOKEN = process.env.TOKEN;
-const successText = 'You have already been invited to join this team. We have sent the invitation email again for you.';
-
-const resendInvite = async (email) => {
-  try {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--disable-gpu', '--no-sandbox'],
-    });
-    const page = await browser.newPage();
-
-    await page.goto(`${SLACK_URL}/forgot/reset`);
-    await page.type('#email', email);
-    await page.keyboard.press('Enter');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-    const element = await page.$('#page_contents');
-    const text = await element.evaluate(node => node.innerText);
-
-    await browser.close();
-
-    return text && text.includes(successText);
-  } catch (e) {
-    console.error(e);
-    await browser.close();
-  }
-};
+const API_SECRET = process.env.API_SECRET;
 
 app.use((req, res, next) => {
-  if (!!TOKEN && req.token !== TOKEN) {
+  if (!!API_SECRET && req.token !== API_SECRET) {
     res.status(401).send('Unauthorized');
   } else {
     next();
   }
 });
 
-app.post('/resend', async (req, res) => {
+app.post('/user', async (req, res) => {
   const email = req.body.email;
+  const name = req.body.name;
 
-  if (!email) {
+  if (!(name && email)) {
     res.status(400).send('Bad request');
     return;
   }
+  
+  try {
+    const user = await createUser({email, name});
+    console.log('created or updated SCIM user', { id: user.id });
 
-  const ok = await resendInvite(email);
-  if (ok) {
-    res.sendStatus(200);
-  } else {
-    res.status(404).send('Invite re-send failed, user may already exist');
+    const createdAt = new Date(user.meta.created);
+    const response = {user};
+    
+    if (isSameDay(createdAt, new Date())) {
+      const invited = await resendInvite(email);
+      response.invited = invited;
+      console.log('attempted to send invite for user', { id: user.id, invited: invited });
+    }
+
+    res.status(200).json(response);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send(e.message);
   }
 });
 
