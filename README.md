@@ -1,6 +1,6 @@
-# resend-slack-invite
+# send-slack-invite
  
-Small webhook that uses Puppeteer to request a new Slack invite for a previously invited user.
+Small webhook that uses the Slack SCIM API and Puppeteer to invite a user to a Slack workspace.
 
 Disclaimer: this could stop working at literally any time!
 
