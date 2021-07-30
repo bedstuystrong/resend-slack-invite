@@ -32,7 +32,16 @@ POST /user
 }
 ```
 
-If the response code is 200, the user creation and invite was successful.
+Successful response:
+
+```json
+{
+  "user": { ... },
+  "invited": true
+}
+```
+
+If the `invited` property is missing from the response, a user with the email already exists and we have skipped requesting an invite email.
 
 There are a few reasons why user creation can fail, mostly related to the required `username` field (which Slack no longer displays). We default to passing in the email (the API will strip everything after the `@`) and try to [catch and fix](https://github.com/bedstuystrong/resend-slack-invite/blob/main/slack.js#L57) a few common username errors. 
 
