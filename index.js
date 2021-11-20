@@ -1,10 +1,11 @@
 require('dotenv').config();
+
 const isSameDay = require('date-fns/isSameDay');
 const express = require('express');
 const bodyParser = require('body-parser');
 const bearerToken = require('express-bearer-token');
 
-const { createUser } = require('./slack');
+const { createActiveUser } = require('./slack');
 const { resendInvite } = require('./invite');
 
 const app = express();
@@ -32,7 +33,7 @@ app.post('/user', async (req, res) => {
   }
   
   try {
-    const user = await createUser({email, name});
+    const user = await createActiveUser({email, name});
     console.log('created or updated SCIM user', { id: user.id });
 
     const createdAt = new Date(user.meta.created);
