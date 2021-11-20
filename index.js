@@ -43,6 +43,8 @@ app.post('/user', async (req, res) => {
       const invited = await resendInvite(email);
       response.invited = invited;
       console.log('attempted to send invite for user', { id: user.id, invited: invited });
+    } else {
+      response.invited = false;
     }
 
     res.status(200).json(response);
