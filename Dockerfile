@@ -6,7 +6,7 @@ USER root
 COPY package*.json yarn.lock ./
 RUN yarn
 
-COPY *.js .env* ./
+# COPY *.js .env* ./
 
 USER chrome
 ENTRYPOINT ["node", "index.js"]

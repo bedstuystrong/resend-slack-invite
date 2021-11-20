@@ -14,27 +14,24 @@ const generatePassword = () => new Promise((resolve, reject) => {
   });
 });
 
-const createScimUser = async ({email, name, username = email} = {}) => {
-  const body = {
-    schemas: [
-      'urn:scim:schemas:core:1.0',
-      'urn:scim:schemas:extension:enterprise:1.0'
-    ],
-    emails: [{ value: email, primary: true }],
-    userName: username,
-    displayName: name,
-    active: true,
-    password: await generatePassword(),
-  };
-  const response = await fetch('https://api.slack.com/scim/v1/Users/', {
-    method: 'POST',
+const scimRequest = async ({path = '', method = 'GET', body}) => {
+  const response = await fetch(`https://api.slack.com/scim/v1/Users/${path}`, {
+    method: method,
     headers: {
       'Authorization': `Bearer ${SCIM_TOKEN}`,
-      'Content-Type': 'application/json',
+      ...(body && {'Content-Type': 'application/json'}),
     },
-    body: JSON.stringify(body),
+    body: body && JSON.stringify({
+      schemas: [
+        'urn:scim:schemas:core:1.0',
+        'urn:scim:schemas:extension:enterprise:1.0'
+      ],
+      ...body,
+    }),
   });
+
   const json = await response.json();
+
   if (response.ok) {
     return json;
   } else {
@@ -43,6 +40,30 @@ const createScimUser = async ({email, name, username = email} = {}) => {
     throw error;
   }
 };
+
+const createScimUser = async ({email, name, username = email} = {}) => {
+  const body = {
+    emails: [{ value: email, primary: true }],
+    userName: username,
+    displayName: name,
+    active: true,
+    password: await generatePassword(),
+  };
+  return await scimRequest({
+    method: 'POST',
+    body,
+  });
+};
+
+const reactivateScimUser = async ({id}) => (
+  await scimRequest({
+    path: id,
+    method: 'PATCH',
+    body: {
+      active: true,
+    },
+  })
+);
 
 const extractUsernameError = (error) => {
   if (!error.message.includes('username_')) return false;
@@ -68,18 +89,36 @@ const fixUsernameError = (error) => {
   }
 }
 
-const createUser = async ({email, name}) => {
+const extractUserFromEmailTakenError = (error) => {
+  if (!error.message.startsWith('bad_email_address')) return false;
+  if (!error.message.includes('reason=email_taken')) return false;
+
+  const matches = error.message.match(/existing_user=([a-z0-9]+)/i);
+  return matches[1];
+};
+
+const createActiveUser = async ({email, name}) => {
   let retries = 0;
   let username = email;
+  let userId = false;
 
   while (retries <= MAX_RETRIES) {
     try {
-      return await createScimUser({ email, name, username });
+      if (userId) {
+        return await reactivateScimUser({ id: userId })
+      } else {
+        return await createScimUser({ email, name, username });
+      }
     } catch (error) {
       const usernameError = extractUsernameError(error);
+      const emailTakenError = extractUserFromEmailTakenError(error);
 
       if (usernameError) {
         username = fixUsernameError(error);
+        retries++;
+        continue;
+      } else if (emailTakenError) {
+        userId = emailTakenError;
         retries++;
         continue;
       } else {
@@ -90,5 +129,5 @@ const createUser = async ({email, name}) => {
 };
 
 module.exports = {
-  createUser,
+  createActiveUser,
 };
